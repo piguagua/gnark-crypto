@@ -156,6 +156,10 @@ func (s *poolStats) dump() {
 }
 
 func (s *poolStats) finalize() {
+	if s.Allocated == 0 {
+		s.ReuseRate = 0
+		return
+	}
 	s.ReuseRate = float64(s.Used) / float64(s.Allocated)
 }
 

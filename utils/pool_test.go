@@ -4,10 +4,26 @@
 package utils
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 )
+
+func TestPoolStatsWithUnusedSubPool(t *testing.T) {
+	pool := NewPool[int](1, 4)
+	value := pool.Make(1)
+	pool.Dump(value)
+	stats := poolsStats{}
+	for i := range pool.subPools {
+		pool.subPools[i].stats.finalize()
+		stats.SubPools = append(stats.SubPools, pool.subPools[i].stats)
+	}
+	_, err := json.Marshal(stats)
+	require.NoError(t, err, "partially used pools must have JSON-serializable statistics")
+	require.Equal(t, float64(1), stats.SubPools[0].ReuseRate)
+	require.Zero(t, stats.SubPools[1].ReuseRate)
+}
 
 func TestPoolMakeDump(t *testing.T) {
 	pool := NewPool[uint64](4, 16)
